@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cats001/widgets/header.dart';
 import 'package:flutter/material.dart';
 
@@ -7,18 +9,26 @@ class CreateAccount extends StatefulWidget {
 }
 
 class _CreateAccountState extends State<CreateAccount> {
+  final _scaffolkey = GlobalKey<ScaffoldState>();
   final _formkey = GlobalKey<FormState>();
   String username = "";
 
   submit() {
-    _formkey.currentState!.save();
-    Navigator.pop(context, username);
+    final form = _formkey.currentState;
+    if (form!.validate()) {
+      SnackBar snackBar = SnackBar(content: Text("Welcome to FIU Animals"));
+      form.save();
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      Navigator.pop(context, username);
+    }
   }
 
   @override
   Widget build(BuildContext parentContext) {
     return Scaffold(
-      appBar: header(context, titleText: "Create account"),
+      key: _scaffolkey,
+      appBar:
+          header(context, titleText: "Create account", removeBackButton: true),
       body: ListView(
         children: <Widget>[
           Container(
@@ -38,7 +48,15 @@ class _CreateAccountState extends State<CreateAccount> {
                   child: Container(
                     child: Form(
                         key: _formkey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         child: TextFormField(
+                          validator: (val) {
+                            if (val!.trim().length < 3 || val.isEmpty) {
+                              return "Username too short";
+                            } else {
+                              return null;
+                            }
+                          },
                           onSaved: (val) => username = val!,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),

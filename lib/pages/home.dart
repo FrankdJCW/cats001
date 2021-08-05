@@ -1,3 +1,4 @@
+import 'package:cats001/models/user.dart';
 import 'package:cats001/pages/activity_feed.dart';
 import 'package:cats001/pages/create_account.dart';
 import 'package:cats001/pages/profile.dart';
@@ -13,6 +14,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 final GoogleSignIn googleSignIn = GoogleSignIn();
 final usersRef = FirebaseFirestore.instance.collection('users');
 final DateTime timestamp = DateTime.now();
+User? currentUser;
 
 //Creates home page
 class Home extends StatefulWidget {
@@ -60,7 +62,7 @@ class _HomeState extends State<Home> {
   createUser() async {
     //Get current user's data
     final GoogleSignInAccount? user = googleSignIn.currentUser;
-    final DocumentSnapshot doc = await usersRef.doc(user!.id).get();
+    DocumentSnapshot doc = await usersRef.doc(user!.id).get();
 
     //If user does not exist
     if (!doc.exists) {
@@ -77,7 +79,11 @@ class _HomeState extends State<Home> {
         "bio": "",
         "timestamp": timestamp
       });
+
+      doc = await usersRef.doc(user.id).get();
     }
+
+    currentUser = User.fromDocument(doc);
   }
 
   //This disposes of the page controller
