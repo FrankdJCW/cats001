@@ -1,14 +1,18 @@
 import 'package:cats001/pages/activity_feed.dart';
+import 'package:cats001/pages/create_account.dart';
 import 'package:cats001/pages/profile.dart';
 import 'package:cats001/pages/search.dart';
 import 'package:cats001/pages/timeline.dart';
 import 'package:cats001/pages/upload.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 //Required for google sign in
 final GoogleSignIn googleSignIn = GoogleSignIn();
+final usersRef = FirebaseFirestore.instance.collection('users');
+final DateTime timestamp = DateTime.now();
 
 //Creates home page
 class Home extends StatefulWidget {
@@ -42,13 +46,36 @@ class _HomeState extends State<Home> {
 //This method checks if the account is logged in (currently only google accounts)
   handleSignIn(GoogleSignInAccount? account) {
     if (account != null) {
-      print('User Signed In $account');
+      createUser();
       setState(() {
         isAuth = true;
       });
     } else {
       setState(() {
         isAuth = false;
+      });
+    }
+  }
+
+  createUser() async {
+    //Get current user's data
+    final GoogleSignInAccount? user = googleSignIn.currentUser;
+    final DocumentSnapshot doc = await usersRef.doc(user!.id).get();
+
+    //If user does not exist
+    if (!doc.exists) {
+      final username = await Navigator.push(
+          context, MaterialPageRoute(builder: (context) => CreateAccount()));
+
+      //create their account
+      usersRef.doc(user.id).set({
+        "id": user.id,
+        "username": username,
+        "photoUrl": user.photoUrl,
+        "email": user.email,
+        "displayName": user.displayName,
+        "bio": "",
+        "timestamp": timestamp
       });
     }
   }
@@ -91,7 +118,10 @@ class _HomeState extends State<Home> {
           Timeline(),
           ActivityFeed(),
           Upload(),
-          Search(),
+          //This button is for testing only, it will be replaced
+          //by the Search button eventually
+          ElevatedButton(onPressed: logout, child: Text('logout')),
+          //Search(),
           Profile(),
         ],
         controller: pageController,
